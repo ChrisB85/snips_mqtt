@@ -7,7 +7,8 @@ def get_intent_question(x):
         "Unmute" : "What do you want to unmute?",
         "Play" : "What do you want to play?",
         "Pause" : "What do you want to pause?",
-        "Stop" : "What do you want to stop?"
+        "Stop" : "What do you want to stop?",
+        "clear_room": "Sorry, which room?"
     }.get(x, "")
 
 

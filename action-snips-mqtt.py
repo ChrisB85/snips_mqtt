@@ -25,16 +25,14 @@ MQTT_PASS = Config.get('secret', 'pass')
 MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
 
 # Answers slots
-ANSWER = Config.get('global', 'intent_answer')
-INTENT_ANSWER = USERNAME_PREFIX + ANSWER
 INTENT_INTERRUPT = USERNAME_PREFIX + "Interrupt"
 INTENT_DOES_NOT_KNOW = USERNAME_PREFIX + "DoesNotKnow"
 
-INTENT_FILTER_GET_ANSWER = [
-    INTENT_ANSWER,
-    INTENT_INTERRUPT,
-    INTENT_DOES_NOT_KNOW
-]
+answers = Config.get('global', 'intent_answer').split(",")
+INTENT_FILTER_GET_ANSWER = []
+for a in answers:
+    INTENT_FILTER_GET_ANSWER.append(USERNAME_PREFIX + a.strip())
+pprint(INTENT_FILTER_GET_ANSWER)
 
 SessionsStates = {}
 
@@ -72,6 +70,10 @@ def put_mqtt(ip, port, topic, payload, username, password):
     client.disconnect()
 
 
+def get_intent_site_id(intent_message):
+    return intent_message.site_id
+
+
 def get_intent_msg(intent_message):
     return intent_message.intent.intent_name.split(':')[-1]
 
@@ -83,9 +85,9 @@ def start_session(hermes, intent_message):
         return
 
     print "Starting device control session " + session_id
-    session_state = {"topic": get_intent_msg(intent_message), "slot": []}
+    session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": []}
 
-    #device = intent_message.slots.device.first()
+    # device = intent_message.slots.device.first()
     intent_slots = c.get_intent_slots(intent_message)
     if len(intent_slots) == 0:
         save_session_state(SessionsStates, session_id, session_state)
@@ -94,7 +96,8 @@ def start_session(hermes, intent_message):
                                         INTENT_FILTER_GET_ANSWER)
     else:
         session_state["slot"] = c.get_intent_slots(intent_message)
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("topic"), session_state.get("slot"), MQTT_USER, MQTT_PASS)
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
+                 session_state.get("slot"), MQTT_USER, MQTT_PASS)
         hermes.publish_end_session(session_id, None)
 
 
@@ -107,7 +110,8 @@ def user_gives_answer(hermes, intent_message):
 
     print session_state.get("slot")
     if not continues:
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("topic"), session_state.get("slot"), MQTT_USER, MQTT_PASS)
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
+                 session_state.get("slot"), MQTT_USER, MQTT_PASS)
         remove_session_state(SessionsStates, session_id)
         hermes.publish_end_session(session_id, None)
         return
@@ -146,9 +150,10 @@ def session_ended(hermes, session_ended_message):
 
 
 with Hermes(MQTT_ADDR) as h:
-    h.subscribe_intents(start_session) \
-        .subscribe_intent(INTENT_INTERRUPT, user_quits) \
-        .subscribe_intent(INTENT_ANSWER, user_gives_answer) \
+    h.subscribe_intents(start_session)
+    for a in INTENT_FILTER_GET_ANSWER:
+        h.subscribe_intent(a, user_gives_answer)
+    h.subscribe_intent(INTENT_INTERRUPT, user_quits) \
         .subscribe_session_ended(session_ended) \
         .subscribe_session_started(session_started) \
         .start()

@@ -1,14 +1,14 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
 import paho.mqtt.client as mqtt
 import config as c
-import io, time, ConfigParser
+import io, time, configparser
 from pprint import pprint
 
 CONFIGURATION_ENCODING_FORMAT = "utf-8"
 CONFIG_INI = "config.ini"
-Config = ConfigParser.ConfigParser()
+Config = configparser.ConfigParser()
 Config.read(CONFIG_INI)
 
 USERNAME_PREFIX = Config.get('global', 'prefix')
@@ -56,12 +56,12 @@ def remove_session_state(sessions_states, session_id):
 def put_mqtt(ip, port, topic, payload, username, password):
     client = mqtt.Client("Client")  # create new instance
     client.username_pw_set(username, password)
-    client.connect(ip, port)  # connect to broker
-    if isinstance(payload, basestring):
+    client.connect(ip, int(port))  # connect to broker
+    if isinstance(payload, str):
         payload = [payload]
     payload_count = len(payload)
     for p in payload:
-        print "Publishing " + topic + " / " + p.lower()
+        print("Publishing " + topic + " / " + p.lower())
         msg = client.publish(topic, p.lower())
         if msg is not None:
             msg.wait_for_publish()
@@ -84,7 +84,7 @@ def start_session(hermes, intent_message):
     if intent_msg_name not in INTENT_FILTER_START_SESSION:
         return
 
-    print "Starting device control session " + session_id
+    print("Starting device control session " + session_id)
     session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": []}
 
     # device = intent_message.slots.device.first()
@@ -104,11 +104,11 @@ def start_session(hermes, intent_message):
 def user_gives_answer(hermes, intent_message):
     print("User is giving an answer")
     session_id = intent_message.session_id
-    print session_id
+    print(session_id)
     session_state = SessionsStates.get(session_id)
     session_state, sentence, continues = check_user_answer(session_state, intent_message)
 
-    print session_state.get("slot")
+    print(session_state.get("slot"))
     if not continues:
         put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
                  session_state.get("slot"), MQTT_USER, MQTT_PASS)
@@ -129,7 +129,7 @@ def user_quits(hermes, intent_message):
 
 def check_user_answer(session_state, intent_message):
     if session_state is None:
-        print "Error: session_state is None ==> intent triggered outside of dialog session"
+        print("Error: session_state is None ==> intent triggered outside of dialog session")
         return session_state, "", False
 
     answer = c.get_intent_slots(intent_message)

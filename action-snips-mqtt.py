@@ -39,7 +39,8 @@ SessionsStates = {}
 
 def _set_not_none_dict_value(to_update, update):
     to_update = to_update or {}
-    for key, value in update.iteritems():
+    pprint(update)
+    for key, value in update.items():
         if value is not None:
             to_update[key] = value
     return to_update

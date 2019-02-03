@@ -8,7 +8,8 @@ def get_intent_question(x):
         "Play" : "What do you want to play?",
         "Pause" : "What do you want to pause?",
         "Stop" : "What do you want to stop?",
-        "clear_room": "Sorry, which room?"
+        "clear_room": "Sorry, which room?",
+        "command": "Co chcesz zrobić?"
     }.get(x, "")
 
 

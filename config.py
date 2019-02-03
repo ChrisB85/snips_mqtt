@@ -1,14 +1,14 @@
 def get_intent_question(x):
     return {
-        "IWant": "What do you want to do?",
-        "TurnOn" : "What do you want to turn on?",
-        "TurnOff" : "What do you want to turn off?",
-        "Mute" : "What do you want to mute?",
-        "Unmute" : "What do you want to unmute?",
-        "Play" : "What do you want to play?",
-        "Pause" : "What do you want to pause?",
-        "Stop" : "What do you want to stop?",
-        "clear_room": "Sorry, which room?",
+        "IWant": "Co chcesz robić?",
+        "TurnOn" : "Co chcesz włączyć?",
+        "TurnOff" : "Co chcesz wyłączyć?",
+        "Mute" : "Co chcesz wyciszyć?",
+        "Unmute" : "Czego dźwięk chcesz przywrócić?",
+        "Play" : "Co chcesz odtworzyć?",
+        "Pause" : "Co chcesz wstrzymać?",
+        "Stop" : "Co chcesz zatrzymać?",
+        "clear_room": "Który pokój?",
         "command": "Co chcesz zrobić?"
     }.get(x, "")
 

@@ -139,7 +139,7 @@ def check_user_answer(session_state, intent_message):
     answer = c.get_intent_slots(intent_message)
     # We just try keep listening to the user until we get an answer
     if len(answer) == 0:
-        return session_state, "Please repeat", True
+        return session_state, "Możesz powtórzyć?", True
 
     session_state["slot"] = answer
     return session_state, "", False

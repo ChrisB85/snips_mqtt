@@ -109,7 +109,10 @@ def user_gives_answer(hermes, intent_message):
     session_state = SessionsStates.get(session_id)
     session_state, sentence, continues = check_user_answer(session_state, intent_message)
 
-    print(session_state.get("slot"))
+    if session_state is None:
+        session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": c.get_intent_slots(intent_message)}
+
+#    print(session_state.get("slot"))
     if not continues:
         put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
                  session_state.get("slot"), MQTT_USER, MQTT_PASS)

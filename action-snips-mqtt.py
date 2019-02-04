@@ -91,9 +91,13 @@ def start_session(hermes, intent_message):
     # device = intent_message.slots.device.first()
     intent_slots = c.get_intent_slots(intent_message)
     if len(intent_slots) == 0:
+        question = c.get_intent_question(session_state.get("topic").split(':')[-1])
+        pprint(question)
+        if question == "":
+            hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
         save_session_state(SessionsStates, session_id, session_state)
         hermes.publish_continue_session(session_id,
-                                        c.get_intent_question(session_state.get("topic").split(':')[-1]),
+                                        question,
                                         INTENT_FILTER_GET_ANSWER)
     else:
         session_state["slot"] = c.get_intent_slots(intent_message)

@@ -14,8 +14,10 @@ def get_intent_question(x):
 
 
 def get_intent_slots(intent_message):
-    slots_count = len(intent_message.slots.intent_slot)
     slots = []
+    if (intent_message.slots is None):
+        return slots
+    slots_count = len(intent_message.slots.intent_slot)
     for x in range(slots_count):
         slots.append(intent_message.slots.intent_slot[x].slot_value.value.value)
     return slots

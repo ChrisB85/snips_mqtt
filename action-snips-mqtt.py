@@ -62,8 +62,8 @@ def put_mqtt(ip, port, topic, payload, username, password):
         payload = [payload]
     payload_count = len(payload)
     for p in payload:
-        print("Publishing " + topic + " / " + p.lower())
-        msg = client.publish(topic, p.lower())
+        print("Publishing " + topic + " / " + p)
+        msg = client.publish(topic, p)
         if msg is not None:
             msg.wait_for_publish()
         if payload_count > 1:

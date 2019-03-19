@@ -62,7 +62,7 @@ def put_mqtt(ip, port, topic, payload, username, password):
         payload = [payload]
     payload_count = len(payload)
     for p in payload:
-        print("Publishing " + topic + " / " + p)
+        print("Publishing on: " + topic + " Payload: " + p)
         msg = client.publish(topic, p)
         if msg is not None:
             msg.wait_for_publish()
@@ -101,8 +101,12 @@ def start_session(hermes, intent_message):
                                         INTENT_FILTER_GET_ANSWER)
     else:
         session_state["slot"] = c.get_intent_slots(intent_message)
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
-                 session_state.get("slot"), MQTT_USER, MQTT_PASS)
+        site_id = str(session_state.get("siteId"))
+        topic = str(session_state.get("topic"))
+#        pprint(session_state.get("slot"))
+        slot = str(session_state.get("slot")[0])
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, slot, MQTT_USER, MQTT_PASS)
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, slot, MQTT_USER, MQTT_PASS)
         hermes.publish_end_session(session_id, None)
 
 
@@ -118,8 +122,12 @@ def user_gives_answer(hermes, intent_message):
 
 #    print(session_state.get("slot"))
     if not continues:
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, session_state.get("siteId") + "/" + session_state.get("topic"),
-                 session_state.get("slot"), MQTT_USER, MQTT_PASS)
+        site_id = str(session_state.get("siteId"))
+        topic = str(session_state.get("topic"))
+#        pprint(session_state.get("slot"))
+        slot = str(session_state.get("slot")[0])
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, slot, MQTT_USER, MQTT_PASS)
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, slot, MQTT_USER, MQTT_PASS)
         remove_session_state(SessionsStates, session_id)
         hermes.publish_end_session(session_id, None)
         return

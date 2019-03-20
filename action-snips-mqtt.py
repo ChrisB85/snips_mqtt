@@ -86,27 +86,29 @@ def start_session(hermes, intent_message):
         return
 
     print("Starting device control session " + session_id)
-    session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": []}
+    intent_slots = c.get_intent_slots(intent_message)
+    locations = c.get_locationss(intent_message)
+    session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": intent_slots, "location": locations}
 
     # device = intent_message.slots.device.first()
-    intent_slots = c.get_intent_slots(intent_message)
     if len(intent_slots) == 0:
         question = c.get_intent_question(session_state.get("topic").split(':')[-1])
         pprint(question)
         if question == "":
             hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
         save_session_state(SessionsStates, session_id, session_state)
-        hermes.publish_continue_session(session_id,
-                                        question,
-                                        INTENT_FILTER_GET_ANSWER)
+        hermes.publish_continue_session(session_id, question, INTENT_FILTER_GET_ANSWER)
     else:
-        session_state["slot"] = c.get_intent_slots(intent_message)
+        session_state["slot"] = intent_slots
+        session_state["location"] = locations
         site_id = str(session_state.get("siteId"))
         topic = str(session_state.get("topic"))
 #        pprint(session_state.get("slot"))
-        slot = str(session_state.get("slot")[0])
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, slot, MQTT_USER, MQTT_PASS)
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, slot, MQTT_USER, MQTT_PASS)
+        payload = str(session_state.get("slot")[0])
+        if len(locations) >= 1:
+            payload = payload + "/" + str(session_state.get("location")[0])
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
+        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
         hermes.publish_end_session(session_id, None)
 
 

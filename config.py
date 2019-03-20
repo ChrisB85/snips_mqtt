@@ -21,3 +21,12 @@ def get_intent_slots(intent_message):
     for x in range(slots_count):
         slots.append(intent_message.slots.intent_slot[x].slot_value.value.value)
     return slots
+
+def get_locationss(intent_message):
+    slots = []
+    if (intent_message.slots is None):
+        return slots
+    slots_count = len(intent_message.slots.location)
+    for x in range(slots_count):
+        slots.append(intent_message.slots.location[x].slot_value.value.value)
+    return slots

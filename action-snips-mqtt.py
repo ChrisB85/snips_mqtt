@@ -104,11 +104,15 @@ def start_session(hermes, intent_message):
         site_id = str(session_state.get("siteId"))
         topic = str(session_state.get("topic"))
 #        pprint(session_state.get("slot"))
-        payload = str(session_state.get("slot")[0])
+        payloads = session_state.get("slot")
+        pprint(payloads)
+        payload_suffix = ""
         if len(locations) >= 1:
-            payload = payload + "/" + str(session_state.get("location")[0])
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
+            payload_suffix = "/" + str(session_state.get("location")[0])
+        for payload in payloads:
+            payload = payload + payload_suffix
+            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
+            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
         hermes.publish_end_session(session_id, None)
 
 

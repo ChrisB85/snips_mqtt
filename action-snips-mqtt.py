@@ -103,7 +103,6 @@ def start_session(hermes, intent_message):
         session_state["location"] = locations
         site_id = str(session_state.get("siteId"))
         topic = str(session_state.get("topic"))
-#        pprint(session_state.get("slot"))
         payloads = session_state.get("slot")
         pprint(payloads)
         payload_suffix = ""
@@ -126,14 +125,20 @@ def user_gives_answer(hermes, intent_message):
     if session_state is None:
         session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": c.get_intent_slots(intent_message)}
 
-#    print(session_state.get("slot"))
     if not continues:
         site_id = str(session_state.get("siteId"))
         topic = str(session_state.get("topic"))
-#        pprint(session_state.get("slot"))
-        slot = str(session_state.get("slot")[0])
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, slot, MQTT_USER, MQTT_PASS)
-        put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, slot, MQTT_USER, MQTT_PASS)
+        payloads = session_state.get("slot")
+        if len(payloads) == 0:
+            hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
+        locations = c.get_locationss(intent_message)
+        payload_suffix = ""
+        if len(locations) >= 1:
+            payload_suffix = "/" + str(locations[0])
+        for payload in payloads:
+            payload = payload + payload_suffix
+            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
+            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
         remove_session_state(SessionsStates, session_id)
         hermes.publish_end_session(session_id, None)
         return
@@ -146,12 +151,12 @@ def user_quits(hermes, intent_message):
     session_id = intent_message.session_id
 
     remove_session_state(SessionsStates, session_id)
-    hermes.publish_end_session(session_id, "OK, no problem")
+    hermes.publish_end_session(session_id, "OK, nie ma problemu")
 
 
 def check_user_answer(session_state, intent_message):
     if session_state is None:
-        print("Error: session_state is None ==> intent triggered outside of dialog session")
+        print("session_state is None ==> intent triggered outside of dialog session")
         return session_state, "", False
 
     answer = c.get_intent_slots(intent_message)

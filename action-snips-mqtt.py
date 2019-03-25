@@ -32,7 +32,6 @@ answers = Config.get('global', 'intent_answer').split(",")
 INTENT_FILTER_GET_ANSWER = []
 for a in answers:
     INTENT_FILTER_GET_ANSWER.append(USERNAME_PREFIX + a.strip())
-pprint(INTENT_FILTER_GET_ANSWER)
 
 SessionsStates = {}
 
@@ -87,7 +86,7 @@ def start_session(hermes, intent_message):
 
     print("Starting device control session " + session_id)
     intent_slots = c.get_intent_slots(intent_message)
-    locations = c.get_locationss(intent_message)
+    locations = c.get_locations(intent_message)
     session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": intent_slots, "location": locations}
 
     # device = intent_message.slots.device.first()
@@ -131,7 +130,7 @@ def user_gives_answer(hermes, intent_message):
         payloads = session_state.get("slot")
         if len(payloads) == 0:
             hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
-        locations = c.get_locationss(intent_message)
+        locations = c.get_locations(intent_message)
         payload_suffix = ""
         if len(locations) >= 1:
             payload_suffix = "/" + str(locations[0])

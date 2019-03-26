@@ -2,33 +2,23 @@
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
 import paho.mqtt.client as mqtt
-import config as c
-import io, time, configparser
+import mqtt_client
+import io, time
 from pprint import pprint
 
-CONFIGURATION_ENCODING_FORMAT = "utf-8"
-CONFIG_INI = "config.ini"
-Config = configparser.ConfigParser()
-Config.read(CONFIG_INI)
+# Intent slots
+USERNAME_PREFIX = mqtt_client.get_config().get('global', 'prefix')
 
-USERNAME_PREFIX = Config.get('global', 'prefix')
-
-intents = Config.get('global', 'intent').split(",")
+intents = mqtt_client.get_config().get('global', 'intent').split(",")
 INTENT_FILTER_START_SESSION = []
 for x in intents:
     INTENT_FILTER_START_SESSION.append(USERNAME_PREFIX + x.strip())
-
-MQTT_IP_ADDR = Config.get('secret', 'host')
-MQTT_PORT = Config.get('secret', 'port')
-MQTT_USER = Config.get('secret', 'user')
-MQTT_PASS = Config.get('secret', 'pass')
-MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
 
 # Answers slots
 INTENT_INTERRUPT = USERNAME_PREFIX + "Interrupt"
 INTENT_DOES_NOT_KNOW = USERNAME_PREFIX + "DoesNotKnow"
 
-answers = Config.get('global', 'intent_answer').split(",")
+answers = mqtt_client.get_config().get('global', 'intent_answer').split(",")
 INTENT_FILTER_GET_ANSWER = []
 for a in answers:
     INTENT_FILTER_GET_ANSWER.append(USERNAME_PREFIX + a.strip())
@@ -53,23 +43,6 @@ def remove_session_state(sessions_states, session_id):
     sessions_states[session_id] = None
 
 
-def put_mqtt(ip, port, topic, payload, username, password):
-    client = mqtt.Client("Client")  # create new instance
-    client.username_pw_set(username, password)
-    client.connect(ip, int(port))  # connect to broker
-    if isinstance(payload, str):
-        payload = [payload]
-    payload_count = len(payload)
-    for p in payload:
-        print("Publishing on: " + topic + " Payload: " + p)
-        msg = client.publish(topic, p)
-        if msg is not None:
-            msg.wait_for_publish()
-        if payload_count > 1:
-            time.sleep(100.0 / 1000.0)
-    client.disconnect()
-
-
 def get_intent_site_id(intent_message):
     return intent_message.site_id
 
@@ -78,20 +51,57 @@ def get_intent_msg(intent_message):
     return intent_message.intent.intent_name.split(':')[-1]
 
 
+def get_intent_question(x):
+    return {
+        "IWant": "Co chcesz robić?",
+        "TurnOn" : "Co chcesz włączyć?",
+        "TurnOff" : "Co chcesz wyłączyć?",
+        "Mute" : "Co chcesz wyciszyć?",
+        "Unmute" : "Czego dźwięk chcesz przywrócić?",
+        "Play" : "Co chcesz odtworzyć?",
+        "Pause" : "Co chcesz wstrzymać?",
+        "Stop" : "Co chcesz zatrzymać?",
+        "clear_room": "Które pomieszczenie?"
+#        "command": "Co chcesz zrobić?"
+    }.get(x, "")
+
+
+def get_intent_slots(intent_message):
+    slots = []
+    if (intent_message.slots is None):
+        return slots
+    slots_count = len(intent_message.slots.intent_slot)
+    for x in range(slots_count):
+        slots.append(intent_message.slots.intent_slot[x].slot_value.value.value)
+    return slots
+
+
+def get_locations(intent_message):
+    slots = []
+    if (intent_message.slots is None):
+        return slots
+    slots_count = len(intent_message.slots.location)
+    for x in range(slots_count):
+        slots.append(intent_message.slots.location[x].slot_value.value.value)
+    return slots
+
+
 def start_session(hermes, intent_message):
     session_id = intent_message.session_id
     intent_msg_name = intent_message.intent.intent_name
+    pprint(intent_msg_name)
+    pprint(INTENT_FILTER_START_SESSION)
     if intent_msg_name not in INTENT_FILTER_START_SESSION:
         return
 
     print("Starting device control session " + session_id)
-    intent_slots = c.get_intent_slots(intent_message)
-    locations = c.get_locations(intent_message)
+    intent_slots = get_intent_slots(intent_message)
+    locations = get_locations(intent_message)
     session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": intent_slots, "location": locations}
 
     # device = intent_message.slots.device.first()
     if len(intent_slots) == 0:
-        question = c.get_intent_question(session_state.get("topic").split(':')[-1])
+        question = get_intent_question(session_state.get("topic").split(':')[-1])
         pprint(question)
         if question == "":
             hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
@@ -109,8 +119,8 @@ def start_session(hermes, intent_message):
             payload_suffix = "/" + str(session_state.get("location")[0])
         for payload in payloads:
             payload = payload + payload_suffix
-            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
-            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
+            mqtt_client.put(site_id + "/" + topic, payload)
+            mqtt_client.put(topic + "/" + site_id, payload)
         hermes.publish_end_session(session_id, None)
 
 
@@ -122,7 +132,7 @@ def user_gives_answer(hermes, intent_message):
     session_state, sentence, continues = check_user_answer(session_state, intent_message)
 
     if session_state is None:
-        session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": c.get_intent_slots(intent_message)}
+        session_state = {"siteId": get_intent_site_id(intent_message), "topic": get_intent_msg(intent_message), "slot": get_intent_slots(intent_message)}
 
     if not continues:
         site_id = str(session_state.get("siteId"))
@@ -130,14 +140,14 @@ def user_gives_answer(hermes, intent_message):
         payloads = session_state.get("slot")
         if len(payloads) == 0:
             hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
-        locations = c.get_locations(intent_message)
+        locations = get_locations(intent_message)
         payload_suffix = ""
         if len(locations) >= 1:
             payload_suffix = "/" + str(locations[0])
         for payload in payloads:
             payload = payload + payload_suffix
-            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, site_id + "/" + topic, payload, MQTT_USER, MQTT_PASS)
-            put_mqtt(MQTT_IP_ADDR, MQTT_PORT, topic + "/" + site_id, payload, MQTT_USER, MQTT_PASS)
+            mqtt_client.put(site_id + "/" + topic, payload)
+            mqtt_client.put(topic + "/" + site_id, payload)
         remove_session_state(SessionsStates, session_id)
         hermes.publish_end_session(session_id, None)
         return
@@ -158,7 +168,7 @@ def check_user_answer(session_state, intent_message):
         print("session_state is None ==> intent triggered outside of dialog session")
         return session_state, "", False
 
-    answer = c.get_intent_slots(intent_message)
+    answer = get_intent_slots(intent_message)
     # We just try keep listening to the user until we get an answer
     if len(answer) == 0:
         return session_state, "Możesz powtórzyć?", True
@@ -175,7 +185,7 @@ def session_ended(hermes, session_ended_message):
     return
 
 
-with Hermes(MQTT_ADDR) as h:
+with Hermes(mqtt_options = mqtt_client.get_mqtt_options()) as h:
     h.subscribe_intents(start_session)
     for a in INTENT_FILTER_GET_ANSWER:
         h.subscribe_intent(a, user_gives_answer)

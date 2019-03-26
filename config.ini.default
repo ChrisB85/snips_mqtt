@@ -1,0 +1,11 @@
+[global]
+prefix = kblachowicz:
+intent = IWant,TurnOn,TurnOff,Mute,Unmute,Play,Pause,Stop,clear_room,command,dock_vacuum
+intent_answer = Answer,IWantAnswer,DeviceControlAnswer,vacuum_answer
+
+[secret]
+host = localhost
+port = 1883
+user = 
+pass = 
+

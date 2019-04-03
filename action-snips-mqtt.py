@@ -28,7 +28,7 @@ SessionsStates = {}
 
 def _set_not_none_dict_value(to_update, update):
     to_update = to_update or {}
-    pprint(update)
+    #pprint(update)
     for key, value in update.items():
         if value is not None:
             to_update[key] = value
@@ -89,8 +89,8 @@ def get_locations(intent_message):
 def start_session(hermes, intent_message):
     session_id = intent_message.session_id
     intent_msg_name = intent_message.intent.intent_name
-    pprint(intent_msg_name)
-    pprint(INTENT_FILTER_START_SESSION)
+    #pprint(intent_msg_name)
+    #pprint(INTENT_FILTER_START_SESSION)
     if intent_msg_name not in INTENT_FILTER_START_SESSION:
         return
 
@@ -102,7 +102,7 @@ def start_session(hermes, intent_message):
     # device = intent_message.slots.device.first()
     if len(intent_slots) == 0:
         question = get_intent_question(session_state.get("topic").split(':')[-1])
-        pprint(question)
+        #pprint(question)
         if question == "":
             hermes.publish_end_session(session_id, "Przepraszam, nie zrozumiałem")
         save_session_state(SessionsStates, session_id, session_state)
@@ -113,7 +113,7 @@ def start_session(hermes, intent_message):
         site_id = str(session_state.get("siteId"))
         topic = str(session_state.get("topic"))
         payloads = session_state.get("slot")
-        pprint(payloads)
+        #pprint(payloads)
         payload_suffix = ""
         if len(locations) >= 1:
             payload_suffix = "/" + str(session_state.get("location")[0])
@@ -127,7 +127,7 @@ def start_session(hermes, intent_message):
 def user_gives_answer(hermes, intent_message):
     print("User is giving an answer")
     session_id = intent_message.session_id
-    print(session_id)
+    #print(session_id)
     session_state = SessionsStates.get(session_id)
     session_state, sentence, continues = check_user_answer(session_state, intent_message)
 
@@ -165,7 +165,7 @@ def user_quits(hermes, intent_message):
 
 def check_user_answer(session_state, intent_message):
     if session_state is None:
-        print("session_state is None ==> intent triggered outside of dialog session")
+        print("Session_state is None ==> intent triggered outside of dialog session")
         return session_state, "", False
 
     answer = get_intent_slots(intent_message)

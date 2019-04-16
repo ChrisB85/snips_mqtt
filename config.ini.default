@@ -1,4 +1,4 @@
 [global]
 prefix = kblachowicz:
-intent = IWant,TurnOn,TurnOff,Mute,Unmute,Play,Pause,Stop,clear_room,command,dock_vacuum
+intent = IWant,TurnOn,TurnOff,Mute,Unmute,Play,Pause,Stop,clear_room,command,dock_vacuum,VolumeUp,VolumeDown
 intent_answer = Answer,IWantAnswer,DeviceControlAnswer,vacuum_answer

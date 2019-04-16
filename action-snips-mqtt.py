@@ -58,6 +58,8 @@ def get_intent_question(x):
         "TurnOff" : "Co chcesz wyłączyć?",
         "Mute" : "Co chcesz wyciszyć?",
         "Unmute" : "Czego dźwięk chcesz przywrócić?",
+        "VolumeDown" : "Co chcesz sciszyć?",
+        "VolumeUp" : "Co chcesz podgłośnić?",
         "Play" : "Co chcesz odtworzyć?",
         "Pause" : "Co chcesz wstrzymać?",
         "Stop" : "Co chcesz zatrzymać?",

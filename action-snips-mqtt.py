@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
+import snips_common as sc
 import paho.mqtt.client as mqtt
 import mqtt_client
 import io, time
@@ -187,7 +188,7 @@ def session_ended(hermes, session_ended_message):
     return
 
 
-with Hermes(mqtt_options = mqtt_client.get_mqtt_options()) as h:
+with Hermes(mqtt_options = sc.get_hermes_mqtt_options()) as h:
     h.subscribe_intents(start_session)
     for a in INTENT_FILTER_GET_ANSWER:
         h.subscribe_intent(a, user_gives_answer)
